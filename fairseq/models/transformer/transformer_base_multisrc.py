@@ -86,10 +86,17 @@ class TransformerModelBaseMultisrc(FairseqEncoderDecoderModel):
             cfg.share_decoder_input_output_embed = True
         else:
             encoder_embed_tokens=[]
-            for src_dict in src_dicts:
-                encoder_embed_tokens.append(cls.build_embedding(
-                    cfg, src_dict, cfg.encoder.embed_dim, cfg.encoder.embed_path
-                ))
+            if cfg.share_inc_encoder_embeddings:
+                #TODO: add check if all dicts are the same, doesn't make sense if not
+                encoder_embed_tokens=[cls.build_embedding(
+                    cfg, src_dict[0], cfg.encoder.embed_dim, cfg.encoder.embed_path
+                )]
+            else:
+                #each incremental encoder has a different emedding matrix
+                for src_dict in src_dicts:
+                    encoder_embed_tokens.append(cls.build_embedding(
+                        cfg, src_dict, cfg.encoder.embed_dim, cfg.encoder.embed_path
+                    ))
             decoder_embed_tokens = cls.build_embedding(
                 cfg, tgt_dict, cfg.decoder.embed_dim, cfg.decoder.embed_path
             )

@@ -57,7 +57,7 @@ class TransformerEncoderBase(FairseqEncoder):
         self.cfg = cfg
         super().__init__(dictionary)
         self.register_buffer("version", torch.Tensor([3]))
-
+        self.share_inc_encoder_embeddings=cfg.share_inc_encoder_embeddings
         self.dropout_module = FairseqDropout(
             cfg.dropout, module_name=module_name_fordropout(self.__class__.__name__)
         )
@@ -271,7 +271,14 @@ class TransformerEncoderBase(FairseqEncoder):
          #   logging.info(encoder_padding_mask)
             has_pads = src_tokens.device.type == "xla" or encoder_padding_mask.any()# or True
             #has_pads=encoder_padding_mask.any()
-            x, encoder_embedding = self.forward_embedding(src_tokens,i)
+        
+            if self.share_inc_encoder_embeddings:
+                x, encoder_embedding = self.forward_embedding(src_tokens,0)
+                #logging.info("sharing embeddings")
+            else:
+                #logging.info("not sharing embeddings")
+
+                x, encoder_embedding = self.forward_embedding(src_tokens,i)
             #logging.info(x)
             # account for padding while computing the representation
             if has_pads:
